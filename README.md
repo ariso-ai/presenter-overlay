@@ -4,7 +4,7 @@ A lightweight macOS menu bar app that shows your camera in a small, circular, al
 
 ## Features
 
-- **Circle or rectangle shape** — choose between a circular or rounded-rectangle portrait overlay
+- **Multiple shapes** — circle, portrait (3:4 vertical rectangle), or landscape (4:3 horizontal rectangle)
 - **Floating camera preview** — borderless, always on top, works across all spaces and fullscreen
 - **Background removal** — uses Apple Vision framework person segmentation to show just you with a transparent background, perfect for overlaying on presentations
 - **Draggable** — click and drag to reposition anywhere on screen
@@ -36,7 +36,7 @@ On first launch, grant camera permission when prompted.
 
 | Option | Shortcut | Description |
 |---|---|---|
-| Shape → Circle / Rectangle | | Switch between circle and rounded-rectangle portrait |
+| Shape → Circle / Portrait / Landscape | | Switch between circle, vertical (3:4), or horizontal (4:3) rectangle |
 | Size → Small / Medium / Large | | Resize to 120px / 200px / 300px |
 | Remove Background | ⌘B | Toggle person segmentation with transparent background |
 | Mirror Camera | ⌘M | Toggle horizontal mirror (selfie mode) |

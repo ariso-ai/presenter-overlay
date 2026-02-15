@@ -37,7 +37,7 @@ struct ContentView: View {
         switch cameraManager.overlayShape {
         case .circle:
             AnyShape(Circle())
-        case .rectangle:
+        case .portrait, .landscape:
             AnyShape(RoundedRectangle(cornerRadius: rectangleCornerRadius, style: .continuous))
         }
     }
@@ -49,7 +49,7 @@ struct ContentView: View {
             case .circle:
                 Circle()
                     .stroke(Color.white.opacity(0.3), lineWidth: 2)
-            case .rectangle:
+            case .portrait, .landscape:
                 RoundedRectangle(cornerRadius: rectangleCornerRadius, style: .continuous)
                     .stroke(Color.white.opacity(0.3), lineWidth: 2)
             }

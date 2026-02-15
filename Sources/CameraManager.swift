@@ -5,7 +5,8 @@ import Vision
 
 enum OverlayShape: String {
     case circle
-    case rectangle
+    case portrait
+    case landscape
 }
 
 class CameraManager: NSObject, ObservableObject {

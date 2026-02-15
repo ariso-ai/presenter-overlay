@@ -41,7 +41,7 @@ class ShapeHitTestView: NSView {
             if (dx * dx + dy * dy) > (radius * radius) {
                 return nil
             }
-        case .rectangle:
+        case .portrait, .landscape:
             let path = NSBezierPath(roundedRect: bounds, xRadius: cornerRadius, yRadius: cornerRadius)
             if !path.contains(localPoint) {
                 return nil

@@ -22,7 +22,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private let minSize: CGFloat = 80
     private let maxSize: CGFloat = 400
     private let defaultSize: CGFloat = 200
-    private let portraitAspectRatio: CGFloat = 3.0 / 4.0 // width / height
+    private let portraitRatio: CGFloat = 3.0 / 4.0   // width / height (tall)
+    private let landscapeRatio: CGFloat = 4.0 / 3.0  // width / height (wide)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupWindow()
@@ -87,8 +88,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         switch cameraManager.overlayShape {
         case .circle:
             return NSSize(width: width, height: width)
-        case .rectangle:
-            return NSSize(width: width, height: width / portraitAspectRatio)
+        case .portrait:
+            return NSSize(width: width, height: width / portraitRatio)
+        case .landscape:
+            return NSSize(width: width, height: width / landscapeRatio)
         }
     }
 
@@ -127,14 +130,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Shape submenu
         let shapeMenu = NSMenu()
-        let circleItem = NSMenuItem(title: "Circle", action: #selector(setShapeCircle(_:)), keyEquivalent: "")
-        circleItem.target = self
-        circleItem.state = .on
-        shapeMenu.addItem(circleItem)
-        let rectItem = NSMenuItem(title: "Rectangle", action: #selector(setShapeRectangle(_:)), keyEquivalent: "")
-        rectItem.target = self
-        rectItem.state = .off
-        shapeMenu.addItem(rectItem)
+        for (title, action, isDefault) in [
+            ("Circle", #selector(setShape(_:)) as Selector, true),
+            ("Portrait", #selector(setShape(_:)) as Selector, false),
+            ("Landscape", #selector(setShape(_:)) as Selector, false),
+        ] as [(String, Selector, Bool)] {
+            let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
+            item.target = self
+            item.state = isDefault ? .on : .off
+            shapeMenu.addItem(item)
+        }
         let shapeItem = NSMenuItem(title: "Shape", action: nil, keyEquivalent: "")
         shapeItem.submenu = shapeMenu
         menu.addItem(shapeItem)
@@ -201,16 +206,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.menu = menu
     }
 
-    @objc private func setShapeCircle(_ sender: NSMenuItem) {
-        switchShape(to: .circle)
-        if let menu = sender.menu {
-            for item in menu.items { item.state = .off }
-        }
-        sender.state = .on
-    }
-
-    @objc private func setShapeRectangle(_ sender: NSMenuItem) {
-        switchShape(to: .rectangle)
+    @objc private func setShape(_ sender: NSMenuItem) {
+        guard let shape = OverlayShape(rawValue: sender.title.lowercased()) else { return }
+        switchShape(to: shape)
         if let menu = sender.menu {
             for item in menu.items { item.state = .off }
         }
