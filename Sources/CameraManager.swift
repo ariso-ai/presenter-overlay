@@ -3,10 +3,16 @@ import Combine
 import CoreImage
 import Vision
 
+enum OverlayShape: String {
+    case circle
+    case rectangle
+}
+
 class CameraManager: NSObject, ObservableObject {
     let session = AVCaptureSession()
     @Published var isMirrored = true
     @Published var backgroundRemoval = false
+    @Published var overlayShape: OverlayShape = .circle
     @Published var availableCameras: [AVCaptureDevice] = []
     @Published var currentCamera: AVCaptureDevice?
     @Published var processedFrame: CGImage?

@@ -14,13 +14,15 @@ struct PresenterOverlayApp {
 }
 
 class AppDelegate: NSObject, NSApplicationDelegate {
-    var overlayWindow: CircularWindow!
+    var overlayWindow: OverlayWindow!
+    var containerView: ShapeHitTestView!
     var statusItem: NSStatusItem!
     let cameraManager = CameraManager()
 
     private let minSize: CGFloat = 80
     private let maxSize: CGFloat = 400
     private let defaultSize: CGFloat = 200
+    private let portraitAspectRatio: CGFloat = 3.0 / 4.0 // width / height
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupWindow()
@@ -36,7 +38,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupWindow() {
         let frame = NSRect(x: 0, y: 0, width: defaultSize, height: defaultSize)
-        overlayWindow = CircularWindow(
+        overlayWindow = OverlayWindow(
             contentRect: frame,
             styleMask: [.borderless],
             backing: .buffered,
@@ -46,15 +48,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let contentView = ContentView(cameraManager: cameraManager)
         let hostingView = NSHostingView(rootView: contentView)
 
-        // Wrap in circular hit-test view for click-through outside the circle
-        let containerView = CircularHitTestView(frame: NSRect(x: 0, y: 0, width: defaultSize, height: defaultSize))
+        containerView = ShapeHitTestView(frame: NSRect(x: 0, y: 0, width: defaultSize, height: defaultSize))
         containerView.autoresizingMask = [.width, .height]
         hostingView.frame = containerView.bounds
         hostingView.autoresizingMask = [.width, .height]
         containerView.addSubview(hostingView)
         overlayWindow.contentView = containerView
 
-        // Add gesture recognizers for resizing
         let magnification = NSMagnificationGestureRecognizer(
             target: self, action: #selector(handleMagnification(_:))
         )
@@ -73,23 +73,42 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func handleMagnification(_ gesture: NSMagnificationGestureRecognizer) {
         guard let window = gesture.view?.window else { return }
-        let currentSize = window.frame.size.width
-        let delta = currentSize * gesture.magnification
-        let newSize = max(minSize, min(maxSize, currentSize + delta))
+        let currentWidth = window.frame.size.width
+        let delta = currentWidth * gesture.magnification
+        let newWidth = max(minSize, min(maxSize, currentWidth + delta))
 
         if gesture.state == .changed {
             gesture.magnification = 0
-            resizeWindow(to: newSize)
+            resizeWindow(to: newWidth)
         }
     }
 
-    private func resizeWindow(to size: CGFloat) {
+    private func windowSize(forWidth width: CGFloat) -> NSSize {
+        switch cameraManager.overlayShape {
+        case .circle:
+            return NSSize(width: width, height: width)
+        case .rectangle:
+            return NSSize(width: width, height: width / portraitAspectRatio)
+        }
+    }
+
+    private func resizeWindow(to width: CGFloat) {
         let oldFrame = overlayWindow.frame
         let centerX = oldFrame.midX
         let centerY = oldFrame.midY
-        let newOrigin = NSPoint(x: centerX - size / 2, y: centerY - size / 2)
-        let newFrame = NSRect(origin: newOrigin, size: NSSize(width: size, height: size))
+        let size = windowSize(forWidth: width)
+        let newOrigin = NSPoint(x: centerX - size.width / 2, y: centerY - size.height / 2)
+        let newFrame = NSRect(origin: newOrigin, size: size)
         overlayWindow.setFrame(newFrame, display: true, animate: false)
+    }
+
+    private func switchShape(to shape: OverlayShape) {
+        cameraManager.overlayShape = shape
+        containerView.shape = shape
+
+        // Resize window to match new shape, keeping same width
+        let currentWidth = overlayWindow.frame.width
+        resizeWindow(to: currentWidth)
     }
 
     // MARK: - Menu Bar
@@ -105,6 +124,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let menu = NSMenu()
+
+        // Shape submenu
+        let shapeMenu = NSMenu()
+        let circleItem = NSMenuItem(title: "Circle", action: #selector(setShapeCircle(_:)), keyEquivalent: "")
+        circleItem.target = self
+        circleItem.state = .on
+        shapeMenu.addItem(circleItem)
+        let rectItem = NSMenuItem(title: "Rectangle", action: #selector(setShapeRectangle(_:)), keyEquivalent: "")
+        rectItem.target = self
+        rectItem.state = .off
+        shapeMenu.addItem(rectItem)
+        let shapeItem = NSMenuItem(title: "Shape", action: nil, keyEquivalent: "")
+        shapeItem.submenu = shapeMenu
+        menu.addItem(shapeItem)
 
         // Size submenu
         let sizeMenu = NSMenu()
@@ -168,6 +201,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.menu = menu
     }
 
+    @objc private func setShapeCircle(_ sender: NSMenuItem) {
+        switchShape(to: .circle)
+        if let menu = sender.menu {
+            for item in menu.items { item.state = .off }
+        }
+        sender.state = .on
+    }
+
+    @objc private func setShapeRectangle(_ sender: NSMenuItem) {
+        switchShape(to: .rectangle)
+        if let menu = sender.menu {
+            for item in menu.items { item.state = .off }
+        }
+        sender.state = .on
+    }
+
     @objc private func setSizePreset(_ sender: NSMenuItem) {
         resizeWindow(to: CGFloat(sender.tag))
     }
@@ -187,7 +236,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard let camera = sender.representedObject as? AVCaptureDevice else { return }
         cameraManager.switchCamera(to: camera)
 
-        // Update menu checkmarks
         if let menu = sender.menu {
             for item in menu.items {
                 item.state = (item.representedObject as? AVCaptureDevice) == camera ? .on : .off
