@@ -118,6 +118,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         sizeItem.submenu = sizeMenu
         menu.addItem(sizeItem)
 
+        // Background removal toggle
+        let bgRemovalItem = NSMenuItem(
+            title: "Remove Background",
+            action: #selector(toggleBackgroundRemoval(_:)),
+            keyEquivalent: "b"
+        )
+        bgRemovalItem.target = self
+        bgRemovalItem.state = cameraManager.backgroundRemoval ? .on : .off
+        menu.addItem(bgRemovalItem)
+
         // Mirror toggle
         let mirrorItem = NSMenuItem(
             title: "Mirror Camera",
@@ -162,8 +172,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         resizeWindow(to: CGFloat(sender.tag))
     }
 
+    @objc private func toggleBackgroundRemoval(_ sender: NSMenuItem) {
+        cameraManager.backgroundRemoval.toggle()
+        sender.state = cameraManager.backgroundRemoval ? .on : .off
+    }
+
     @objc private func toggleMirror(_ sender: NSMenuItem) {
         cameraManager.isMirrored.toggle()
+        cameraManager.updateMirroring()
         sender.state = cameraManager.isMirrored ? .on : .off
     }
 

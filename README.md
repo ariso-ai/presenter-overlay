@@ -1,15 +1,42 @@
-# Presenter overlay
+# Presenter Overlay
+
+A lightweight macOS menu bar app that shows your camera in a small, circular, always-on-top floating window — similar to the presenter overlay in FaceTime screen sharing.
 
 ## Features
-  - Circular floating camera preview (200px default)
-  - Always on top, works across all spaces and fullscreen
-  - Drag to reposition anywhere on screen
-  - Pinch-to-zoom on trackpad to resize (80px–400px)
-  - Click-through on transparent corners outside the circle
-  - Menu bar icon with controls:
-    - Size presets (Small/Medium/Large)
-    - Mirror toggle
-    - Camera selection (if multiple cameras)
-    - Quit
-  - No dock icon — just the circle + menu bar item
-  - Thin white border ring and drop shadow for visibility
+
+- **Circular floating camera preview** — borderless, always on top, works across all spaces and fullscreen
+- **Background removal** — uses Apple Vision framework person segmentation to show just you with a transparent background, perfect for overlaying on presentations
+- **Draggable** — click and drag to reposition anywhere on screen
+- **Resizable** — pinch-to-zoom on trackpad (80px–400px range, 200px default)
+- **Menu bar controls** — size presets, background removal toggle, mirror toggle, camera selection
+- **No dock icon** — just the floating circle and a menu bar item
+
+## Requirements
+
+- macOS 14.0+
+- Apple Silicon (arm64)
+
+## Build & Run
+
+```bash
+# Build and launch
+make run
+
+# Build only
+make build
+
+# Clean
+make clean
+```
+
+On first launch, grant camera permission when prompted.
+
+## Menu Bar Options
+
+| Option | Shortcut | Description |
+|---|---|---|
+| Size → Small / Medium / Large | | Resize to 120px / 200px / 300px |
+| Remove Background | ⌘B | Toggle person segmentation with transparent background |
+| Mirror Camera | ⌘M | Toggle horizontal mirror (selfie mode) |
+| Camera | | Switch between available cameras |
+| Quit | ⌘Q | Exit the app |
