@@ -29,6 +29,7 @@ $(BUNDLE): $(SOURCES) Info.plist
 	mkdir -p $(BUNDLE)/Contents/Resources
 	cp $(APP_NAME) $(BUNDLE)/Contents/MacOS/
 	cp Info.plist $(BUNDLE)/Contents/
+	cp Resources/AppIcon.icns $(BUNDLE)/Contents/Resources/
 	rm $(APP_NAME)
 	@echo "Built $(BUNDLE) successfully."
 

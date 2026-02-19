@@ -16,6 +16,8 @@
 	<string>APPL</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Presenter Overlay needs camera access to show your camera feed in a floating circular window.</string>
 	<key>NSHighResolutionCapable</key>

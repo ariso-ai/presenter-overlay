@@ -23,6 +23,10 @@ Screen recordings and live presentations feel more personal when your face is vi
 - macOS 14.0+
 - Apple Silicon (arm64)
 
+## Security
+
+It will need to grant this app to access your camera.
+
 ## Build & Run
 
 ```bash
