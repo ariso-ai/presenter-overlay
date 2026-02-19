@@ -4,6 +4,8 @@ A lightweight macOS menu bar app that floats your camera feed on top of any wind
 
 No extra software needed. Just build, launch, and you appear as a small floating overlay on screen, ready to be seen alongside your slides, code editor, or any app.
 
+<img alt="menu bar options image" src="https://github.com/user-attachments/assets/ff894478-6601-44c0-b9a0-beaeace0593b" width="524" height="209" />
+
 ## Why
 
 Screen recordings and live presentations feel more personal when your face is visible. Presenter Overlay gives you a always-on-top camera window with **background removal**, so only you appear — no cluttered room behind you. Drag it to any corner, resize it, and keep presenting.
