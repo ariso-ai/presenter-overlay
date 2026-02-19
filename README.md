@@ -1,6 +1,6 @@
 # Presenter Overlay
 
-[![Unit tests](https://github.com/ariso-ai/presenter-overlay/actions/workflows/ci.yml/badge.svg)](https://github.com/ariso-ai/presenter-overlay/actions/workflows/ci.yml)
+[![Unit tests](https://github.com/ariso-ai/presenter-overlay/actions/workflows/test.yml/badge.svg)](https://github.com/ariso-ai/presenter-overlay/actions/workflows/test.yml)
 ![macOS](https://img.shields.io/badge/macOS-Apple_Silicon-blue?logo=apple)
 
 A lightweight macOS menu bar app that floats your camera feed on top of any window — so your audience sees you while you present, demo, or teach.
