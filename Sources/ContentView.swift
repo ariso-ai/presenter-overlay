@@ -4,7 +4,7 @@ struct ContentView: View {
     @ObservedObject var cameraManager: CameraManager
 
     private let rectangleCornerRadius: CGFloat = 16
-
+    private let squircleCornerRatio: CGFloat = 0.4
     private let shadePadding: CGFloat = 16
 
     var body: some View {
@@ -12,6 +12,7 @@ struct ContentView: View {
             let inset = cameraManager.shade ? shadePadding : 0
             let width = geometry.size.width - inset * 2
             let height = geometry.size.height - inset * 2
+            let contentSize = CGSize(width: width, height: height)
 
             Group {
                 if cameraManager.backgroundRemoval, let frame = cameraManager.processedFrame {
@@ -26,8 +27,8 @@ struct ContentView: View {
                 }
             }
             .frame(width: width, height: height)
-            .clipShape(clipShape)
-            .overlay(borderOverlay)
+            .clipShape(clipShape(for: contentSize))
+            .overlay(borderOverlay(for: contentSize))
             .shadow(color: .black.opacity(cameraManager.shade ? 0.4 : 0), radius: cameraManager.shade ? 6 : 0, x: 0, y: cameraManager.shade ? 4 : 0)
             .frame(width: geometry.size.width, height: geometry.size.height)
         }
@@ -37,21 +38,30 @@ struct ContentView: View {
         !cameraManager.backgroundRemoval && !cameraManager.shade
     }
 
-    private var clipShape: AnyShape {
+    private func squircleRadius(for size: CGSize) -> CGFloat {
+        min(size.width, size.height) * squircleCornerRatio
+    }
+
+    private func clipShape(for size: CGSize) -> AnyShape {
         switch cameraManager.overlayShape {
         case .circle:
             AnyShape(Circle())
+        case .squircle:
+            AnyShape(RoundedRectangle(cornerRadius: squircleRadius(for: size), style: .continuous))
         case .portrait, .landscape:
             AnyShape(RoundedRectangle(cornerRadius: rectangleCornerRadius, style: .continuous))
         }
     }
 
     @ViewBuilder
-    private var borderOverlay: some View {
+    private func borderOverlay(for size: CGSize) -> some View {
         if showChrome {
             switch cameraManager.overlayShape {
             case .circle:
                 Circle()
+                    .stroke(Color.white.opacity(0.3), lineWidth: 2)
+            case .squircle:
+                RoundedRectangle(cornerRadius: squircleRadius(for: size), style: .continuous)
                     .stroke(Color.white.opacity(0.3), lineWidth: 2)
             case .portrait, .landscape:
                 RoundedRectangle(cornerRadius: rectangleCornerRadius, style: .continuous)

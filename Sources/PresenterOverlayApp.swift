@@ -86,7 +86,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func windowSize(forWidth width: CGFloat) -> NSSize {
         switch cameraManager.overlayShape {
-        case .circle:
+        case .circle, .squircle:
             return NSSize(width: width, height: width)
         case .portrait:
             return NSSize(width: width, height: width / portraitRatio)
@@ -132,6 +132,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let shapeMenu = NSMenu()
         for (title, action, isDefault) in [
             ("Circle", #selector(setShape(_:)) as Selector, true),
+            ("Squircle", #selector(setShape(_:)) as Selector, false),
             ("Portrait", #selector(setShape(_:)) as Selector, false),
             ("Landscape", #selector(setShape(_:)) as Selector, false),
         ] as [(String, Selector, Bool)] {

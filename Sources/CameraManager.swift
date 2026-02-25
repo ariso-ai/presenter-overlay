@@ -5,6 +5,7 @@ import Vision
 
 enum OverlayShape: String {
     case circle
+    case squircle
     case portrait
     case landscape
 }

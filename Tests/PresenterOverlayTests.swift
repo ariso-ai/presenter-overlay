@@ -29,9 +29,11 @@ func assertEqual<T: Equatable>(_ a: T, _ b: T, _ message: String, file: String =
 func testOverlayShape() {
     print("OverlayShape")
     assertEqual(OverlayShape.circle.rawValue, "circle", "circle raw value")
+    assertEqual(OverlayShape.squircle.rawValue, "squircle", "squircle raw value")
     assertEqual(OverlayShape.portrait.rawValue, "portrait", "portrait raw value")
     assertEqual(OverlayShape.landscape.rawValue, "landscape", "landscape raw value")
     assertEqual(OverlayShape(rawValue: "circle"), .circle, "init from circle")
+    assertEqual(OverlayShape(rawValue: "squircle"), .squircle, "init from squircle")
     assertEqual(OverlayShape(rawValue: "portrait"), .portrait, "init from portrait")
     assertEqual(OverlayShape(rawValue: "landscape"), .landscape, "init from landscape")
     assert(OverlayShape(rawValue: "invalid") == nil, "invalid raw value returns nil")
@@ -50,6 +52,13 @@ func testShapeHitTest() {
 
     // Circle: corner should miss (outside radius)
     assert(view.hitTest(NSPoint(x: 5, y: 5)) == nil, "circle hit test: corner misses")
+
+    // Squircle: center should hit
+    view.shape = .squircle
+    assert(view.hitTest(NSPoint(x: 100, y: 100)) != nil, "squircle hit test: center hits")
+
+    // Squircle: corner should miss
+    assert(view.hitTest(NSPoint(x: 5, y: 5)) == nil, "squircle hit test: corner misses")
 
     // Rectangle: center should hit
     view.shape = .portrait
