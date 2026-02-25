@@ -13,6 +13,7 @@ class CameraManager: NSObject, ObservableObject {
     let session = AVCaptureSession()
     @Published var isMirrored = true
     @Published var backgroundRemoval = false
+    @Published var shade = true
     @Published var overlayShape: OverlayShape = .circle
     @Published var availableCameras: [AVCaptureDevice] = []
     @Published var currentCamera: AVCaptureDevice?

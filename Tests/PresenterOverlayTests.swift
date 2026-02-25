@@ -75,7 +75,7 @@ func testOverlayWindow() {
     assert(!window.isOpaque, "window is not opaque")
     assertEqual(window.backgroundColor, .clear, "window background is clear")
     assertEqual(window.level, .floating, "window level is floating")
-    assert(window.hasShadow, "window has shadow")
+    assert(!window.hasShadow, "window has no shadow")
     assert(window.isMovableByWindowBackground, "window is movable by background")
     assert(window.collectionBehavior.contains(.canJoinAllSpaces), "window joins all spaces")
     assert(window.collectionBehavior.contains(.fullScreenAuxiliary), "window supports fullscreen auxiliary")

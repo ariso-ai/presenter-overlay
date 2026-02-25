@@ -176,6 +176,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         mirrorItem.state = cameraManager.isMirrored ? .on : .off
         menu.addItem(mirrorItem)
 
+        // Shade toggle
+        let shadeItem = NSMenuItem(
+            title: "Shade",
+            action: #selector(toggleShade(_:)),
+            keyEquivalent: "s"
+        )
+        shadeItem.target = self
+        shadeItem.state = cameraManager.shade ? .on : .off
+        menu.addItem(shadeItem)
+
         // Camera submenu (if multiple cameras)
         if cameraManager.availableCameras.count > 1 {
             let cameraMenu = NSMenu()
@@ -228,6 +238,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         cameraManager.isMirrored.toggle()
         cameraManager.updateMirroring()
         sender.state = cameraManager.isMirrored ? .on : .off
+    }
+
+    @objc private func toggleShade(_ sender: NSMenuItem) {
+        cameraManager.shade.toggle()
+        sender.state = cameraManager.shade ? .on : .off
     }
 
     @objc private func selectCamera(_ sender: NSMenuItem) {

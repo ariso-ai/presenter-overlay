@@ -5,10 +5,13 @@ struct ContentView: View {
 
     private let rectangleCornerRadius: CGFloat = 16
 
+    private let shadePadding: CGFloat = 16
+
     var body: some View {
         GeometryReader { geometry in
-            let width = geometry.size.width
-            let height = geometry.size.height
+            let inset = cameraManager.shade ? shadePadding : 0
+            let width = geometry.size.width - inset * 2
+            let height = geometry.size.height - inset * 2
 
             Group {
                 if cameraManager.backgroundRemoval, let frame = cameraManager.processedFrame {
@@ -25,12 +28,13 @@ struct ContentView: View {
             .frame(width: width, height: height)
             .clipShape(clipShape)
             .overlay(borderOverlay)
-            .shadow(color: .black.opacity(showChrome ? 0.4 : 0), radius: showChrome ? 4 : 0, x: 0, y: 2)
+            .shadow(color: .black.opacity(cameraManager.shade ? 0.4 : 0), radius: cameraManager.shade ? 6 : 0, x: 0, y: cameraManager.shade ? 4 : 0)
+            .frame(width: geometry.size.width, height: geometry.size.height)
         }
     }
 
     private var showChrome: Bool {
-        !cameraManager.backgroundRemoval
+        !cameraManager.backgroundRemoval && !cameraManager.shade
     }
 
     private var clipShape: AnyShape {
