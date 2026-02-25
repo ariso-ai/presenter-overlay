@@ -52,10 +52,11 @@ make clean   # remove build artifacts
 
 | Option | Shortcut | Description |
 |---|---|---|
-| Shape | | Circle, portrait (3:4), or landscape (4:3) |
+| Shape | | circle, squircle, portrait (3:4), or landscape (4:3) |
 | Size | | Small (120px) / Medium (200px) / Large (300px) |
 | Remove Background | ⌘B | Toggle person segmentation |
 | Mirror Camera | ⌘M | Toggle horizontal flip |
+| Shade | ⌘S | Toggle shade |
 | Camera | | Switch between available cameras |
 | Quit | ⌘Q | Exit |
 
