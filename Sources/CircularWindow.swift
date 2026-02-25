@@ -2,6 +2,8 @@ import AppKit
 import SwiftUI
 
 class OverlayWindow: NSWindow {
+    var onResize: ((CGFloat) -> Void)?
+
     override init(
         contentRect: NSRect,
         styleMask style: NSWindow.StyleMask,
@@ -21,6 +23,13 @@ class OverlayWindow: NSWindow {
         hasShadow = false
         isMovableByWindowBackground = true
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+    }
+
+    override func scrollWheel(with event: NSEvent) {
+        // Use deltaY for scroll-based resizing
+        let delta = event.scrollingDeltaY * (event.hasPreciseScrollingDeltas ? 1 : 3)
+        guard abs(delta) > 0.1 else { return }
+        onResize?(delta)
     }
 }
 

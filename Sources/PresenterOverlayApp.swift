@@ -59,7 +59,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let magnification = NSMagnificationGestureRecognizer(
             target: self, action: #selector(handleMagnification(_:))
         )
-        containerView.addGestureRecognizer(magnification)
+        overlayWindow.contentView?.addGestureRecognizer(magnification)
+
+        overlayWindow.onResize = { [weak self] delta in
+            guard let self else { return }
+            let currentWidth = self.overlayWindow.frame.size.width
+            let newWidth = max(self.minSize, min(self.maxSize, currentWidth + delta))
+            self.resizeWindow(to: newWidth)
+        }
 
         // Position at bottom-right of screen
         if let screen = NSScreen.main {
