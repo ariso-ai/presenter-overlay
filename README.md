@@ -7,7 +7,7 @@ A lightweight macOS menu bar app that floats your camera feed on top of any wind
 
 No FaceTime call required. No extra software needed. Just build, launch, and you appear as a small floating overlay on screen, ready to be seen alongside your slides, code editor, or any app.
 
-<img alt="menu bar options image" src="https://github.com/user-attachments/assets/ff894478-6601-44c0-b9a0-beaeace0593b" width="524" height="209" />
+<img width="394" height="237" alt="Image" src="https://github.com/user-attachments/assets/adabb9b6-a080-449a-96fb-5301474d6a23" />
 
 ## Why
 
