@@ -154,7 +154,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Size submenu
         let sizeMenu = NSMenu()
-        for (label, size) in [("Small", 120.0), ("Medium", 200.0), ("Large", 300.0)] {
+        for (label, size) in [("Small", 120.0), ("Medium", 200.0), ("Large", 600.0)] {
             let item = NSMenuItem(title: label, action: #selector(setSizePreset(_:)), keyEquivalent: "")
             item.tag = Int(size)
             item.target = self
