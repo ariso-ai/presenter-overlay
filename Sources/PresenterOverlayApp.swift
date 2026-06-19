@@ -20,7 +20,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     let cameraManager = CameraManager()
 
     private let minSize: CGFloat = 80
-    private let maxSize: CGFloat = 400
+    private let maxSize: CGFloat = 600
     private let defaultSize: CGFloat = 200
     private let portraitRatio: CGFloat = 3.0 / 4.0   // width / height (tall)
     private let landscapeRatio: CGFloat = 4.0 / 3.0  // width / height (wide)
@@ -154,7 +154,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Size submenu
         let sizeMenu = NSMenu()
-        for (label, size) in [("Small", 120.0), ("Medium", 200.0), ("Large", 600.0)] {
+        for (label, size) in [("Small", 120.0), ("Medium", 200.0),("Large",300), ("Larger", 500.0), ("Huge", 600.0)] {
             let item = NSMenuItem(title: label, action: #selector(setSizePreset(_:)), keyEquivalent: "")
             item.tag = Int(size)
             item.target = self
