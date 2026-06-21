@@ -10,10 +10,16 @@ enum OverlayShape: String {
     case landscape
 }
 
+enum BackgroundMode: String, CaseIterable {
+    case off
+    case blur
+    case remove
+}
+
 class CameraManager: NSObject, ObservableObject {
     let session = AVCaptureSession()
     @Published var isMirrored = true
-    @Published var backgroundRemoval = false
+    @Published var backgroundMode: BackgroundMode = .off
     @Published var shade = true
     @Published var overlayShape: OverlayShape = .circle
     @Published var availableCameras: [AVCaptureDevice] = []
@@ -123,44 +129,48 @@ class CameraManager: NSObject, ObservableObject {
 
 extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        guard backgroundRemoval else {
-            // When background removal is off, clear the processed frame
-            // so the view switches to the preview layer
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
+
+        if backgroundMode != .off {
+            let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
+            do {
+                try handler.perform([segmentationRequest])
+            } catch {
+                return
+            }
+
+            guard let maskBuffer = segmentationRequest.results?.first?.pixelBuffer else { return }
+
+            let cameraImage = CIImage(cvPixelBuffer: pixelBuffer)
+            let maskImage = CIImage(cvPixelBuffer: maskBuffer)
+
+            let scaleX = cameraImage.extent.width / maskImage.extent.width
+            let scaleY = cameraImage.extent.height / maskImage.extent.height
+            let scaledMask = maskImage.transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
+
+            let background: CIImage
+            if backgroundMode == .blur {
+                background = cameraImage.applyingFilter("CIGaussianBlur", parameters: [
+                    kCIInputRadiusKey: 30.0
+                ]).cropped(to: cameraImage.extent)
+            } else {
+                background = CIImage.empty()
+            }
+
+            let blended = cameraImage.applyingFilter("CIBlendWithMask", parameters: [
+                kCIInputBackgroundImageKey: background,
+                kCIInputMaskImageKey: scaledMask
+            ])
+
+            guard let cgImage = ciContext.createCGImage(blended, from: cameraImage.extent) else { return }
+
+            DispatchQueue.main.async {
+                self.processedFrame = cgImage
+            }
+        } else {
             if processedFrame != nil {
                 DispatchQueue.main.async { self.processedFrame = nil }
             }
-            return
-        }
-
-        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-
-        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
-        do {
-            try handler.perform([segmentationRequest])
-        } catch {
-            return
-        }
-
-        guard let maskBuffer = segmentationRequest.results?.first?.pixelBuffer else { return }
-
-        let cameraImage = CIImage(cvPixelBuffer: pixelBuffer)
-        let maskImage = CIImage(cvPixelBuffer: maskBuffer)
-
-        // Scale mask to match camera image dimensions
-        let scaleX = cameraImage.extent.width / maskImage.extent.width
-        let scaleY = cameraImage.extent.height / maskImage.extent.height
-        let scaledMask = maskImage.transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
-
-        // Composite: person over transparent background
-        let blended = cameraImage.applyingFilter("CIBlendWithMask", parameters: [
-            kCIInputBackgroundImageKey: CIImage.empty(),
-            kCIInputMaskImageKey: scaledMask
-        ])
-
-        guard let cgImage = ciContext.createCGImage(blended, from: cameraImage.extent) else { return }
-
-        DispatchQueue.main.async {
-            self.processedFrame = cgImage
         }
     }
 }

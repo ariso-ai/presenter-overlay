@@ -90,6 +90,23 @@ func testOverlayWindow() {
     assert(window.collectionBehavior.contains(.fullScreenAuxiliary), "window supports fullscreen auxiliary")
 }
 
+// MARK: - BackgroundMode Tests
+
+func testBackgroundMode() {
+    print("BackgroundMode")
+    let m = CameraManager()
+    assertEqual(m.backgroundMode, .off, "defaults to off")
+    m.backgroundMode = .blur
+    assertEqual(m.backgroundMode, .blur, "set to blur")
+    m.backgroundMode = .remove
+    assertEqual(m.backgroundMode, .remove, "set to remove")
+    m.backgroundMode = .off
+    assertEqual(m.backgroundMode, .off, "set to off")
+    assertEqual(BackgroundMode.off.rawValue, "off", "rawValue off")
+    assertEqual(BackgroundMode.blur.rawValue, "blur", "rawValue blur")
+    assertEqual(BackgroundMode.remove.rawValue, "remove", "rawValue remove")
+}
+
 // MARK: - Run
 
 @main
@@ -99,6 +116,7 @@ struct TestRunner {
         testOverlayShape()
         testShapeHitTest()
         testOverlayWindow()
+        testBackgroundMode()
         print("\n\(passed) passed, \(failed) failed")
         if failed > 0 { exit(1) }
     }

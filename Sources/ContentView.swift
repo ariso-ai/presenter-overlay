@@ -15,7 +15,7 @@ struct ContentView: View {
             let contentSize = CGSize(width: width, height: height)
 
             Group {
-                if cameraManager.backgroundRemoval, let frame = cameraManager.processedFrame {
+                if cameraManager.backgroundMode != .off, let frame = cameraManager.processedFrame {
                     Image(decorative: frame, scale: 1.0)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -35,7 +35,7 @@ struct ContentView: View {
     }
 
     private var showChrome: Bool {
-        !cameraManager.backgroundRemoval && !cameraManager.shade
+        cameraManager.backgroundMode != .remove && !cameraManager.shade
     }
 
     private func squircleRadius(for size: CGSize) -> CGFloat {
