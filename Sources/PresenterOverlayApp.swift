@@ -164,15 +164,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         sizeItem.submenu = sizeMenu
         menu.addItem(sizeItem)
 
-        // Background removal toggle
-        let bgRemovalItem = NSMenuItem(
-            title: "Remove Background",
-            action: #selector(toggleBackgroundRemoval(_:)),
-            keyEquivalent: "b"
-        )
-        bgRemovalItem.target = self
-        bgRemovalItem.state = cameraManager.backgroundRemoval ? .on : .off
-        menu.addItem(bgRemovalItem)
+        // Background submenu
+        let bgMenu = NSMenu()
+        for (title, key, bgMode) in [
+            ("Off", "", BackgroundMode.off),
+            ("Blur", "u", BackgroundMode.blur),
+            ("Remove Background", "b", BackgroundMode.remove),
+        ] as [(String, String, BackgroundMode)] {
+            let item = NSMenuItem(title: title, action: #selector(setBackgroundMode(_:)), keyEquivalent: key)
+            item.target = self
+            item.representedObject = bgMode
+            item.state = cameraManager.backgroundMode == bgMode ? .on : .off
+            bgMenu.addItem(item)
+        }
+        let bgItem = NSMenuItem(title: "Background", action: nil, keyEquivalent: "")
+        bgItem.submenu = bgMenu
+        menu.addItem(bgItem)
 
         // Mirror toggle
         let mirrorItem = NSMenuItem(
@@ -237,9 +244,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         resizeWindow(to: CGFloat(sender.tag))
     }
 
-    @objc private func toggleBackgroundRemoval(_ sender: NSMenuItem) {
-        cameraManager.backgroundRemoval.toggle()
-        sender.state = cameraManager.backgroundRemoval ? .on : .off
+    @objc private func setBackgroundMode(_ sender: NSMenuItem) {
+        guard let mode = sender.representedObject as? BackgroundMode else { return }
+        cameraManager.backgroundMode = mode
+        if let menu = sender.menu {
+            for item in menu.items { item.state = .off }
+        }
+        sender.state = .on
     }
 
     @objc private func toggleMirror(_ sender: NSMenuItem) {
