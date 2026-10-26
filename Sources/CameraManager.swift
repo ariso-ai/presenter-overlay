@@ -13,7 +13,12 @@ enum OverlayShape: String {
 class CameraManager: NSObject, ObservableObject {
     let session = AVCaptureSession()
     @Published var isMirrored = true
-    @Published var backgroundRemoval = false
+    @Published var backgroundRemoval = false {
+        didSet {
+            print("[Video path] backgroundRemoval=\(backgroundRemoval)")
+            updateRenderConfiguration()
+        }
+    }
     @Published var shade = true
     @Published var overlayShape: OverlayShape = .circle
     @Published var availableCameras: [AVCaptureDevice] = []
@@ -24,6 +29,17 @@ class CameraManager: NSObject, ObservableObject {
     private let videoOutput = AVCaptureVideoDataOutput()
     private let processingQueue = DispatchQueue(label: "com.shawnzhu.presenter-overlay.video", qos: .userInteractive)
     private let ciContext = CIContext(options: [.useSoftwareRenderer: false])
+    // Accessed only by the serial sample-buffer delegate queue.
+    private var lastFrameSize = CGSize.zero
+    private var lastPixelFormat: OSType = 0
+    private var lastProcessingSizes: [CGSize] = []
+    // Requested state is main-thread owned; processing state is queue owned.
+    private var requestedRenderSize = CGSize.zero
+    private var renderRevision = 0
+    private var renderSize = CGSize.zero
+    private var renderBackgroundRemoval = false
+    private var processingRevision = 0
+    private let pendingPresentation = DispatchSemaphore(value: 1)
     private let segmentationRequest: VNGeneratePersonSegmentationRequest = {
         let request = VNGeneratePersonSegmentationRequest()
         request.qualityLevel = .balanced
@@ -46,6 +62,7 @@ class CameraManager: NSObject, ObservableObject {
     }
 
     func start(with device: AVCaptureDevice? = nil) {
+        updateRenderConfiguration()
         session.beginConfiguration()
 
         // Remove existing input
@@ -94,6 +111,16 @@ class CameraManager: NSObject, ObservableObject {
 
         session.commitConfiguration()
 
+        let dimensions = CMVideoFormatDescriptionGetDimensions(camera.activeFormat.formatDescription)
+        let duration = camera.activeVideoMinFrameDuration
+        let fps = duration.seconds > 0 ? 1 / duration.seconds : 0
+        print("[Camera] name=\(camera.localizedName) type=\(camera.deviceType.rawValue) preset=\(session.sessionPreset.rawValue) activeFormat=\(camera.activeFormat) dimensions=\(dimensions.width)x\(dimensions.height) configuredFPS=\(fps) minDuration=\(duration) maxDuration=\(camera.activeVideoMaxFrameDuration)")
+        processingQueue.async {
+            self.lastFrameSize = .zero
+            self.lastPixelFormat = 0
+            self.lastProcessingSizes = []
+        }
+
         if !session.isRunning {
             DispatchQueue.global(qos: .userInitiated).async {
                 self.session.startRunning()
@@ -116,6 +143,26 @@ class CameraManager: NSObject, ObservableObject {
             connection.automaticallyAdjustsVideoMirroring = false
             connection.isVideoMirrored = isMirrored
         }
+        updateRenderConfiguration()
+    }
+
+    func updateRenderSize(_ size: CGSize) {
+        guard size != requestedRenderSize else { return }
+        requestedRenderSize = size
+        updateRenderConfiguration()
+    }
+
+    private func updateRenderConfiguration() {
+        renderRevision += 1
+        let revision = renderRevision
+        let size = requestedRenderSize
+        let removeBackground = backgroundRemoval
+        processingQueue.async {
+            self.renderSize = size
+            self.renderBackgroundRemoval = removeBackground
+            self.processingRevision = revision
+            self.lastProcessingSizes = []
+        }
     }
 }
 
@@ -123,43 +170,52 @@ class CameraManager: NSObject, ObservableObject {
 
 extension CameraManager: AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        guard backgroundRemoval else {
-            // When background removal is off, clear the processed frame
-            // so the view switches to the preview layer
-            if processedFrame != nil {
-                DispatchQueue.main.async { self.processedFrame = nil }
-            }
-            return
-        }
-
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return }
-
-        let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
-        do {
-            try handler.perform([segmentationRequest])
-        } catch {
-            return
+        let frameSize = CGSize(width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer))
+        let pixelFormat = CVPixelBufferGetPixelFormatType(pixelBuffer)
+        if frameSize != lastFrameSize || pixelFormat != lastPixelFormat {
+            lastFrameSize = frameSize
+            lastPixelFormat = pixelFormat
+            print("[Video frames] size=\(frameSize) pixelFormat=\(pixelFormat)")
+        }
+        guard renderSize.width >= 1, renderSize.height >= 1 else { return }
+        let cameraImage = CIImage(cvPixelBuffer: pixelBuffer)
+        var image = cameraImage
+        var maskSize = CGSize.zero
+        if renderBackgroundRemoval {
+            let handler = VNImageRequestHandler(cvPixelBuffer: pixelBuffer, options: [:])
+            do {
+                try handler.perform([segmentationRequest])
+            } catch {
+                return
+            }
+            guard let maskBuffer = segmentationRequest.results?.first?.pixelBuffer else { return }
+            let mask = CIImage(cvPixelBuffer: maskBuffer)
+            maskSize = mask.extent.size
+            let scaledMask = mask.transformed(by: CGAffineTransform(
+                scaleX: cameraImage.extent.width / maskSize.width,
+                y: cameraImage.extent.height / maskSize.height
+            ))
+            image = cameraImage.applyingFilter("CIBlendWithMask", parameters: [
+                kCIInputBackgroundImageKey: CIImage.empty(),
+                kCIInputMaskImageKey: scaledMask
+            ]).cropped(to: cameraImage.extent)
+        }
+        guard let resized = VideoResampler.image(image, fitting: renderSize),
+              let cgImage = ciContext.createCGImage(resized, from: resized.extent) else { return }
+        let processingSizes = [cameraImage.extent.size, maskSize,
+                               CGSize(width: cgImage.width, height: cgImage.height)]
+        if processingSizes != lastProcessingSizes {
+            lastProcessingSizes = processingSizes
+            print("[Video processing] backgroundRemoval=\(renderBackgroundRemoval) input=\(processingSizes[0]) mask=\(maskSize) output=\(processingSizes[2]) filter=Lanczos")
         }
 
-        guard let maskBuffer = segmentationRequest.results?.first?.pixelBuffer else { return }
-
-        let cameraImage = CIImage(cvPixelBuffer: pixelBuffer)
-        let maskImage = CIImage(cvPixelBuffer: maskBuffer)
-
-        // Scale mask to match camera image dimensions
-        let scaleX = cameraImage.extent.width / maskImage.extent.width
-        let scaleY = cameraImage.extent.height / maskImage.extent.height
-        let scaledMask = maskImage.transformed(by: CGAffineTransform(scaleX: scaleX, y: scaleY))
-
-        // Composite: person over transparent background
-        let blended = cameraImage.applyingFilter("CIBlendWithMask", parameters: [
-            kCIInputBackgroundImageKey: CIImage.empty(),
-            kCIInputMaskImageKey: scaledMask
-        ])
-
-        guard let cgImage = ciContext.createCGImage(blended, from: cameraImage.extent) else { return }
-
+        // Bound main-thread publications: never accumulate a queue of retained frames.
+        guard pendingPresentation.wait(timeout: .now()) == .success else { return }
+        let revision = processingRevision
         DispatchQueue.main.async {
+            defer { self.pendingPresentation.signal() }
+            guard revision == self.renderRevision else { return }
             self.processedFrame = cgImage
         }
     }

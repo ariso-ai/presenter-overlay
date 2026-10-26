@@ -26,6 +26,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private let landscapeRatio: CGFloat = 4.0 / 3.0  // width / height (wide)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        print("[Renderer] CoreImage Lanczos / physical-pixel viewport (both background modes)")
         setupWindow()
         setupMenuBar()
         cameraManager.start()

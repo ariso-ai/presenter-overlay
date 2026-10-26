@@ -14,18 +14,10 @@ struct ContentView: View {
             let height = geometry.size.height - inset * 2
             let contentSize = CGSize(width: width, height: height)
 
-            Group {
-                if cameraManager.backgroundRemoval, let frame = cameraManager.processedFrame {
-                    Image(decorative: frame, scale: 1.0)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } else {
-                    CameraPreviewView(
-                        session: cameraManager.session,
-                        isMirrored: cameraManager.isMirrored
-                    )
-                }
-            }
+            CameraPreviewView(
+                frame: cameraManager.processedFrame,
+                onPixelSizeChange: cameraManager.updateRenderSize
+            )
             .frame(width: width, height: height)
             .clipShape(clipShape(for: contentSize))
             .overlay(borderOverlay(for: contentSize))
