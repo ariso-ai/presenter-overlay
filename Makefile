@@ -1,5 +1,6 @@
 APP_NAME = PresenterOverlay
 BUNDLE = $(APP_NAME).app
+EXECUTABLE = $(BUNDLE)/Contents/MacOS/$(APP_NAME)
 SOURCES = $(wildcard Sources/*.swift)
 TEST_SOURCES = $(wildcard Tests/*.swift)
 # Sources without @main entry point, safe to compile with tests
@@ -16,9 +17,9 @@ SWIFT_FLAGS = \
 
 all: run
 
-build: $(BUNDLE)
+build: $(EXECUTABLE)
 
-$(BUNDLE): $(SOURCES) Info.plist
+$(EXECUTABLE): $(SOURCES) Info.plist Makefile Resources/AppIcon.icns
 	@echo "Compiling $(APP_NAME)..."
 	swiftc \
 		-o $(APP_NAME) \
@@ -33,9 +34,11 @@ $(BUNDLE): $(SOURCES) Info.plist
 	rm $(APP_NAME)
 	@echo "Built $(BUNDLE) successfully."
 
-run: $(BUNDLE)
+run: $(EXECUTABLE)
+	@echo "Stopping previous PresenterOverlay instance (if running)..."
+	@pkill -x $(APP_NAME) || test $$? -eq 1
 	@echo "Launching $(APP_NAME)..."
-	open $(BUNDLE)
+	open -n $(BUNDLE)
 
 test: $(TESTABLE_SOURCES) $(TEST_SOURCES)
 	@echo "Compiling tests..."
